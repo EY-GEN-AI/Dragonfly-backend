@@ -1,0 +1,67 @@
+# Core Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+
+# Database
+motor==3.3.2
+pymongo==4.6.1
+dnspython==2.7.0
+
+# Caching
+redis==5.0.1
+aioredis==2.0.1
+
+# Authentication & Security
+PyJWT==2.8.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+cryptography==42.0.2
+
+# HTTP Client with HTTP/2 Support
+httpx[http2]==0.27.0
+h2==4.1.0
+
+# Validation & Settings
+# pydantic==2.6.1
+# pydantic-settings==2.1.0
+# pydantic-settings==2.5.1
+email-validator==2.1.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# File Handling & Utils
+python-multipart==0.0.9
+python-dotenv==1.0.0
+
+# CORS
+starlette==0.36.3
+
+# Async Support
+anyio==4.2.0
+
+# SSL Support
+pyOpenSSL==24.0.0
+certifi==2024.2.2
+urllib3==2.2.0
+
+# AI Integration
+#open-interpreter==0.3.14
+#pip install open-interpreter==0.3.14 
+
+# BELOW ARE MY NEW INSTALLS
+
+
+pandas==2.2.3
+sqlalchemy==2.0.36
+pyodbc==5.2.0
+pgvector==0.3.6
+psycopg2_binary==2.9.10
+langchain-community==0.3.11
+langchain-huggingface==0.1.2
+sentence-transformers==3.3.1
+
+
+diskcache==5.6.3
+
+# torch==2.5.1

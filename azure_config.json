@@ -1,0 +1,97 @@
+{
+    "id": "/subscriptions/666f70fd-7918-4587-95b0-024020d2f03e/resourceGroups/SWCCOAI4ALRSG01/providers/Microsoft.CognitiveServices/accounts/SWCCOAI4ALAOA01",
+    "name": "SWCCOAI4ALAOA01",
+    "kind": "OpenAI",
+    "resourceGroup": "SWCCOAI4ALRSG01",
+    "subscriptionId": "666f70fd-7918-4587-95b0-024020d2f03e",
+    "isValid": true,
+    "key": "54e02e3c640f484992ae4110163b6d67",
+    "location": "swedencentral",
+    "provisioningState": "Succeeded",
+    "endpoint": "https://swccoai4alaoa01.openai.azure.com/",
+    "endpoints": {
+      "OpenAI Language Model Instance API": "https://swccoai4alaoa01.openai.azure.com/",
+      "OpenAI Dall-E API": "https://swccoai4alaoa01.openai.azure.com/",
+      "OpenAI Whisper API": "https://swccoai4alaoa01.openai.azure.com/",
+      "OpenAI Model Scaleset API": "https://swccoai4alaoa01.openai.azure.com/",
+      "OpenAI Realtime API": "https://swccoai4alaoa01.openai.azure.com/",
+      "Token Service API": "https://swccoai4alaoa01.openai.azure.com/"
+    },
+    "plan": "S0",
+    "internalId": "1071e3f1592b46d3901d1ac5ff50cc3b",
+    "createdAt": "2024-11-25T10:55:42.3200178Z",
+    "createdBy": "9f0a0003-bbc3-483f-856e-ed84639c8a22",
+    "identity": {
+      "principalId": "ed1482bb-ed39-4c6a-85da-3bde2a9363aa",
+      "tenantId": "5b973f99-77df-4beb-b27d-aa0c70b8482c",
+      "type": "SystemAssigned"
+    },
+    "disableLocalAuth": false,
+    "tags": {
+      "ROLE_PURPOSE": "CognitiveServices",
+      "ENGAGEMENT_ID": "I-45489062",
+      "OWNER": "Deep.Farkade@in.ey.com;mahesh.makhija@in.ey.com;mahesh.makhija@in.ey.com",
+      "ENVIRONMENT": "poc",
+      "DEPLOYMENT_ID": "OAI4AL",
+      "BUILDING_BLOCK": "cognitive-services-V5.1.0",
+      "TOWER_JOB_ID": "5314747"
+    },
+    "capabilities": [
+      {
+        "name": "VirtualNetworks"
+      },
+      {
+        "name": "CustomerManagedKey"
+      },
+      {
+        "name": "MaxFineTuneCount",
+        "value": "100"
+      },
+      {
+        "name": "MaxRunningFineTuneCount",
+        "value": "1"
+      },
+      {
+        "name": "MaxUserFileCount",
+        "value": "50"
+      },
+      {
+        "name": "MaxTrainingFileSize",
+        "value": "512000000"
+      },
+      {
+        "name": "MaxUserFileImportDurationInHours",
+        "value": "1"
+      },
+      {
+        "name": "MaxFineTuneJobDurationInHours",
+        "value": "720"
+      },
+      {
+        "name": "MaxEvaluationRunDurationInHours",
+        "value": "5"
+      },
+      {
+        "name": "MaxRunningEvaluationCount",
+        "value": "5"
+      },
+      {
+        "name": "IsEvaluationEnabled",
+        "value": "true"
+      },
+      {
+        "name": "ContentLogging",
+        "value": "false"
+      },
+      {
+        "name": "raiLevelOverride"
+      },
+      {
+        "name": "TrustedServices",
+        "value": "Microsoft.CognitiveServices,Microsoft.MachineLearningServices,Microsoft.Search,Microsoft.VideoIndexer"
+      },
+      {
+        "name": "RaiMonitor"
+      }
+    ]
+  }
