@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 # from fastapi_cache.backends.inmemory import InMemoryBackend
 # from fastapi_cache.decorator import cache
 from fastapi.responses import FileResponse, JSONResponse
-from backend.api.routes import auth, chat
+from backend.api.routes import chat
 from backend.core.config import settings
 import uvicorn
 from contextlib import asynccontextmanager
@@ -82,7 +82,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+#app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 
 # Health check endpoint

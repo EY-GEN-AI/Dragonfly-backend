@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from typing import List
-from backend.models.chat import ChatMessage, ChatResponse, ChatSession,GetPersonaRequest
+from backend.models.chat import ChatMessage, ChatResponse, ChatSession, GetPersonaRequest
 from backend.services.chat import ChatService
-#from backend.services.auth import get_current_user
-from backend.core.security import get_current_user
+from backend.core.security import get_current_user, create_access_token, get_user_for_token_endpoint
+from backend.core.config import settings
 
 from pydantic import BaseModel
 from typing import List, Dict, Any
 import logging
+from datetime import timedelta
 
 router = APIRouter()
 chat_service = ChatService()
@@ -19,29 +20,48 @@ class SimilarQuestionRequest(BaseModel):
     question: str
     persona: str
 
-from fastapi import APIRouter, Depends
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    expires_in: int  # seconds
 
-# @router.get("/persona")
-# async def some_endpoint(persona: str = Depends(get_current_persona)):
-#     # You now have the dynamic persona string
-#     return {"message": f"Your persona is {persona}"}
-
-
-
-# @router.post("/sessions", response_model=ChatSession)
-# async def create_session(current_user: dict = Depends(get_current_user)):
-#     # Instead of just passing user_id, pass the entire current_user
-#     return await chat_service.create_session(current_user)
+# New endpoint for token generation - only this endpoint uses uniqueKey
+@router.get("/token", response_model=TokenResponse)
+async def get_token(response: Response, current_user: dict = Depends(get_user_for_token_endpoint)):
+    """
+    Generate JWT token from uniqueKey query parameter.
+    This endpoint should be called first to get the token that will be used for subsequent API calls.
+    """
+    try:
+        # Create JWT token
+        expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = await create_access_token(
+            data={"sub": current_user["id"]},
+            expires_delta=expires_delta
+        )
+        
+        # Return token details to client
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60  # converting minutes to seconds
+        }
+        
+    except Exception as e:
+        logging.error(f"Token generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate token"
+        )
 
 @router.post("/sessions", response_model=ChatSession)
-async def create_session(req:GetPersonaRequest,current_user: dict = Depends(get_current_user)):
+async def create_session(req: GetPersonaRequest, current_user: dict = Depends(get_current_user)):
     # Instead of just passing user_id, pass the entire current_user
-    return await chat_service.create_session(req.module,current_user)
-
+    return await chat_service.create_session(req.module, current_user)
 
 @router.get("/sessions", response_model=List[ChatSession])
 async def get_sessions(current_user: dict = Depends(get_current_user)):
-    return await chat_service.get_user_sessions(str(current_user["id"])) # replace witht the unique ID
+    return await chat_service.get_user_sessions(str(current_user["id"]))
 
 @router.post("/{session_id}/send", response_model=ChatResponse)
 async def send_message(
@@ -57,7 +77,6 @@ async def get_session_messages(
     current_user: dict = Depends(get_current_user)
 ):
     return await chat_service.get_session_messages(session_id, str(current_user["id"]))
-
 
 @router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(
@@ -77,8 +96,6 @@ async def delete_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete chat session"
         )
-    
-
 
 @router.post("/{session_id}/ask_on_df/{message_id}", response_model=ChatResponse)
 async def ask_on_df(

@@ -1,6 +1,7 @@
 #from langchain.schema import HumanMessage
 #from sahdev.pgvector.pgvector import PG_VectorStore
 from ..sahdev.pgvector.pgvector import PG_VectorStore
+from backend.core.config import settings
 # from sqlalchemy import create_engine
 import os
 import warnings
@@ -37,7 +38,7 @@ class MySahdev(PG_VectorStore, OpenAI_Chat):
 sd = MySahdev(config={'model': 'gpt-4'})
 # Create a singleton instance
 sd = MySahdev()
-sd.connect_to_mssql(odbc_conn_str=os.getenv("MSSQL_URL"))
+#sd.connect_to_mssql(odbc_conn_str=os.getenv("MSSQL_URL"))
+sd.connect_to_mssql(odbc_conn_str=settings.MSSQL_URL)
+
 print("Sahdev setup sucessful")
-#sd.execute_query_with_retries("hello")
-#sd.generate_sql("How many orders are delayed due to material unavailability")

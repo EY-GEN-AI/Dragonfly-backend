@@ -1,13 +1,14 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from fastapi import Depends, HTTPException, status,Query
+from fastapi import Depends, HTTPException, status, Query, Header
 from fastapi.security import OAuth2PasswordBearer
 from backend.core.config import settings
 from backend.database.mongodb import MongoDB
+import urllib
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
-
+# Using the tokenUrl parameter even though we'll handle token generation differently
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token", auto_error=False)
 
 async def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -16,122 +17,78 @@ async def create_access_token(data: dict, expires_delta: Optional[timedelta] = N
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm="HS256")
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
-import pyodbc
-import urllib
 
-def get_user_details(token):
-    # Print start of execution
-    print("Starting function execution...")
-    
-    try:
-        # Connection string
-        conn_str = (
-            "Driver={ODBC Driver 17 for SQL Server};"
-            "Server=tcp:ems-sql-db.database.windows.net,1433;"
-            "Database=GEN_AI_NEW;"
-            "Uid=sqladminuser;"
-            "Pwd=Password@123a;"
-            "Encrypt=yes;"
-            "TrustServerCertificate=no;"
-            "Connection Timeout=30;"
-        )
-        
-        print("Attempting to connect to database...")
-        
-        # Establish connection
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
-        
-        print(f"Connected successfully! Searching for token: {token}")
-        
-        # Execute query
-        query = "SELECT email, name FROM TokensTable WHERE token = ?"
-        cursor.execute(query, token)
-        
-        # Fetch result
-        row = cursor.fetchone()
-        
-        if row:
-            print("\nUser found!")
-            print(f"Email: {row.email}")
-            print(f"Name: {row.name}")
-            result = {"email": row.email, "name": row.name}
-        else:
-            print("\nNo user found with this token")
-            result = None
-            
-        # Close connections
-        cursor.close()
-        conn.close()
-        print("Connection closed successfully")
-        
-        return result
-    
-    except Exception as e:
-        print(f"\nError occurred: {str(e)}")
-        print("Error type:", type(e).__name__)
-        return None
-
-
-
-
-# async def get_current_user(token: str = Depends(oauth2_scheme)):
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-
-#     #user = get_user_details(token)
-#     user={
-#             "id": "12345",
-#             "email": "harsh.chandekar@in.ey.com",
-#             "name": "Harsh Chandekar",
-#              # Include persona in response
-#         }
-    
-#     if user is None:
-#         raise credentials_exception
-    
-#     print(user["name"])
-    
-#     return user
-
-
-async def get_current_user(
-    uniqueKey: str = Query(..., alias="uniqueKey")
-):
+async def get_current_user_from_uniqueKey(uniqueKey: str):
+    """Create a user object from uniqueKey parameter"""
     if not uniqueKey:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing uniqueKey",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
     decoded_uniqueKey = urllib.parse.unquote(uniqueKey)
-    #decoded_uniqueKey = urllib.parse.unquote(uniqueKey) 
-
-    # Step 2: Remove all spaces
     sanitized_uniqueKey = decoded_uniqueKey.replace(" ", "")
-    user = {"id": sanitized_uniqueKey}
-    print(user["id"])  # Debugging
-
+    
+    # Here we return basic user info - in production, you might fetch this from a database
+    user = {"id": sanitized_uniqueKey, "type": "uniqueKey"}
+    
     return user
 
+async def get_current_user_from_token(token: str):
+    """Validate JWT token and return user info"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    try:
+        payload = jwt.decode(
+            token, 
+            settings.SECRET_KEY, 
+            algorithms=[settings.ALGORITHM]
+        )
+        user_id = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+            
+        # In production, you might fetch more user details from the database here
+        return {"id": user_id, "type": "token"}
+        
+    except JWTError:
+        raise credentials_exception
 
+async def get_current_user(
+    token: Optional[str] = Depends(oauth2_scheme),
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Strict token-based authentication that only accepts JWT tokens.
+    Does NOT accept uniqueKey parameter.
+    """
+    # Extract token from Authorization header if present (preferred method)
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.replace("Bearer ", "")
+    
+    # If we have a token (either from Authorization header or OAuth2), use it
+    if token:
+        return await get_current_user_from_token(token)
+    
+    # If no token is provided, authentication failed
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication failed. Bearer token required.",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
-# New helper that extracts the persona from the currently logged-in user
-# backend/core/security.py
-
-# from fastapi import Depends, HTTPException, status
-
-# async def get_current_persona(current_user: dict = Depends(get_current_user)):
-#     persona = current_user.get("persona")
-#     if not persona:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="User does not have a persona associated."
-#         )
-#     return persona
+# This function is only used for the token generation endpoint
+async def get_user_for_token_endpoint(uniqueKey: str = Query(...)):
+    """
+    Dedicated authentication method for the token endpoint only.
+    This function specifically only accepts a uniqueKey parameter.
+    """
+    return await get_current_user_from_uniqueKey(uniqueKey)
